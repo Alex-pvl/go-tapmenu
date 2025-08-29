@@ -1,0 +1,16 @@
+services:
+  storage:
+    image: tarantool/tarantool:latest
+    ports:
+      - "3301:3301"
+    networks:
+      - tapmenu_network
+    volumes:
+      - ./migrations/:/opt/tarantool/
+    command: /bin/sh -c "\
+      tarantool /opt/tarantool/init.lua \
+      && echo Initialize has completed successfully."
+
+networks:
+  tapmenu_network:
+    external: true

@@ -1,0 +1,11 @@
+bind_address = ":8088"
+log_level = "debug"
+
+# tarantooldb
+tarantooldb_address = ":3301"
+username = "username"
+password = "password"
+timeout = 3
+
+# kafka
+kafka_address = ":9092"
