@@ -3,11 +3,11 @@ box.watch('box.status', function()
         return
     end
 
-    box.schema.user.create('admin', {
-        password = 'admin',
+    box.schema.user.create('api_user', {
+        password = 'api_user',
         if_not_exists = true
     })
-    box.schema.user.grant('admin', 'super')
+    box.schema.user.grant('api_user', 'super')
 
     box.schema.space.create('tables', { if_not_exists = true })
     box.space.tables:format({
@@ -45,4 +45,7 @@ box.watch('box.status', function()
         { name = 'csrf_token',      type = 'string' },
     })
     box.space.waiters:create_index('pk', { parts = { 'username' }, if_not_exists = true })
+    box.space.waiters:create_index('session_token_idx',
+        { parts = { 'session_token' }, unique = true, if_not_exists = true })
+    box.space.waiters:insert { 'admin', '$2a$10$V16aIiBMif9aYH0FUOOjG.RsgSU9jBhGNOpfdr5ChnqHpSLF2e3YG', '', '' }
 end)
