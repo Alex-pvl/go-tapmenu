@@ -39,6 +39,7 @@ func (s *Store) connect() error {
 
 	conn, err := tarantool.Connect(ctx, dialer, opts)
 	if err != nil {
+		s.logger.Error(err)
 		return err
 	}
 
@@ -51,6 +52,7 @@ func (s *Store) GetTable(hash string) (*Table, error) {
 	resp, err := s.conn.Do(selectRequest).Get()
 	if err != nil {
 		s.logger.Error(err)
+		return nil, err
 	}
 	return mapToTable(resp)
 }
@@ -69,6 +71,7 @@ func (s *Store) FindAndDeleteExistingCall(tableNumber int8) {
 	resp, err := s.conn.Do(selectRequest).Get()
 	if err != nil {
 		s.logger.Error(err)
+		return
 	}
 
 	var idToDelete string
