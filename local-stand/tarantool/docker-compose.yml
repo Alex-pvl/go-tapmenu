@@ -2,7 +2,7 @@ services:
   storage:
     image: tarantool/tarantool:latest
     ports:
-      - "3301:3301"
+      - "3302:3301"
     networks:
       - tapmenu_network
     volumes:

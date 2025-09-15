@@ -20,11 +20,9 @@ box.watch('box.status', function()
     box.space.tables:create_index('pk', { parts = { 'hash' }, if_not_exists = true })
 
     local datetime = require("datetime").parse("2025-01-01T00:00:00.000000000-00:00")
-    box.space.tables:insert { 'hash1', 'menu.ru', 'rest_name', 1, datetime }
-    box.space.tables:insert { 'hash2', 'menu.ru', 'rest_name', 2, datetime }
-    box.space.tables:insert { 'hash3', 'menu.ru', 'rest_name', 3, datetime }
-    box.space.tables:insert { 'hash4', 'menu.ru', 'rest_name', 4, datetime }
-    box.space.tables:insert { 'hash5', 'menu.ru', 'rest_name', 5, datetime }
+    for i = 1, 20 do
+        box.space.tables:insert { string.format("hash%d", i), 'menu.ru', 'rest_name', i, datetime }
+    end
 
     box.schema.space.create('orders', { if_not_exists = true })
     box.space.orders:format({

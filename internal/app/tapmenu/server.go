@@ -25,10 +25,11 @@ func New(
 	configuration *config.Configuration,
 	db *store.Store,
 	producer *kafka.Producer,
+	logger *logrus.Logger,
 ) *Server {
 	return &Server{
 		configuration: configuration,
-		logger:        logrus.New(),
+		logger:        logger,
 		router:        mux.NewRouter(),
 		db:            db,
 		producer:      producer,
@@ -36,26 +37,13 @@ func New(
 }
 
 func (s *Server) Start() error {
-	if err := s.configureLogger(); err != nil {
-		return err
-	}
 	s.configureRouter()
 
-	s.logger.Info("starting server on port ", s.configuration.BindAddress)
+	s.logger.Infof("starting server on %s", s.configuration.BindAddress)
 
 	handler := s.corsMiddleware(s.router)
 
 	return http.ListenAndServe(s.configuration.BindAddress, handler)
-}
-
-func (s *Server) configureLogger() error {
-	level, err := logrus.ParseLevel(s.configuration.LogLevel)
-	if err != nil {
-		return err
-	}
-
-	s.logger.SetLevel(level)
-	return nil
 }
 
 func (s *Server) configureRouter() {

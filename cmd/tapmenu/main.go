@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/sirupsen/logrus"
 	"log"
 
 	"github.com/BurntSushi/toml"
@@ -27,10 +28,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db := store.New(configuration)
-	producer := kafka.NewProducer(configuration)
-	server := tapmenu.New(configuration, db, producer)
-	if err := server.Start(); err != nil {
+	logger, err := configureLogger(configuration)
+	if err != nil {
 		log.Fatal(err)
 	}
+
+	db := store.New(configuration, logger)
+	logger.Infof("connected to tarantool %s:***@%s", configuration.Username, configuration.TarantoolAddress)
+	producer := kafka.NewProducer(configuration)
+	logger.Infof("created Kafka producer on %s", configuration.KafkaAddress)
+	server := tapmenu.New(configuration, db, producer, logger)
+	if err := server.Start(); err != nil {
+		logger.Error(err)
+	}
+}
+
+func configureLogger(configuration *config.Configuration) (*logrus.Logger, error) {
+	level, err := logrus.ParseLevel(configuration.LogLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	logger := logrus.New()
+	logger.SetLevel(level)
+	return logger, nil
 }

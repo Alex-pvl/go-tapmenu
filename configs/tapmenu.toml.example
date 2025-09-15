@@ -3,11 +3,13 @@ log_level = "debug"
 front_origin_url = "http://localhost:3000"
 local_origin_url = "http://localhost:3000"
 
-# tarantooldb
-tarantooldb_address = ":3301"
+# tarantool
+tarantool_address = ":3302"
 username = "username"
 password = "password"
 timeout = 3
+tables_space_id = 512
+orders_space_id = 513
 
 # kafka
 kafka_address = ":9092"

@@ -2,7 +2,7 @@ package store
 
 import (
 	"context"
-	"log"
+	"github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/alex-pvl/go-tapmenu/internal/app/config"
@@ -10,20 +10,16 @@ import (
 	"github.com/tarantool/go-tarantool/v2/datetime"
 )
 
-const (
-	tablesSpaceId = 513
-	ordersSpaceId = 514
-)
-
 type Store struct {
 	config *config.Configuration
 	conn   *tarantool.Connection
+	logger *logrus.Logger
 }
 
-func New(config *config.Configuration) *Store {
-	s := &Store{config: config}
+func New(config *config.Configuration, logger *logrus.Logger) *Store {
+	s := &Store{config: config, logger: logger}
 	if err := s.connect(); err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 	}
 	return s
 }
@@ -33,7 +29,7 @@ func (s *Store) connect() error {
 	defer cancel()
 
 	dialer := tarantool.NetDialer{
-		Address:  s.config.TarantooldbAddress,
+		Address:  s.config.TarantoolAddress,
 		User:     s.config.Username,
 		Password: s.config.Password,
 	}
@@ -51,17 +47,17 @@ func (s *Store) connect() error {
 }
 
 func (s *Store) GetTable(hash string) (*Table, error) {
-	selectRequest := tarantool.NewSelectRequest(tablesSpaceId).Key([]interface{}{hash})
+	selectRequest := tarantool.NewSelectRequest(s.config.TablesSpaceId).Key([]interface{}{hash})
 	resp, err := s.conn.Do(selectRequest).Get()
 	if err != nil {
-		log.Fatal(err)
+		s.logger.Error(err)
 	}
 	return mapToTable(resp)
 }
 
 func (s *Store) UpdateTable(hash string, table *Table) error {
 	lastCallTnt, _ := datetime.MakeDatetime(table.LastCall)
-	replaceRequest := tarantool.NewReplaceRequest(tablesSpaceId).Tuple([]interface{}{
+	replaceRequest := tarantool.NewReplaceRequest(s.config.TablesSpaceId).Tuple([]interface{}{
 		hash, table.Url, table.RestaurantName, table.Number, lastCallTnt,
 	})
 	_, err := s.conn.Do(replaceRequest).Get()
@@ -69,10 +65,10 @@ func (s *Store) UpdateTable(hash string, table *Table) error {
 }
 
 func (s *Store) FindAndDeleteExistingCall(tableNumber int8) {
-	selectRequest := tarantool.NewSelectRequest(ordersSpaceId)
+	selectRequest := tarantool.NewSelectRequest(s.config.OrdersSpaceId)
 	resp, err := s.conn.Do(selectRequest).Get()
 	if err != nil {
-		log.Fatal(err)
+		s.logger.Error(err)
 	}
 
 	var idToDelete string
@@ -93,11 +89,11 @@ func (s *Store) FindAndDeleteExistingCall(tableNumber int8) {
 		return
 	}
 
-	deleteRequest := tarantool.NewDeleteRequest(ordersSpaceId).Key([]interface{}{idToDelete})
+	deleteRequest := tarantool.NewDeleteRequest(s.config.OrdersSpaceId).Key([]interface{}{idToDelete})
 
 	_, err = s.conn.Do(deleteRequest).Get()
 	if err != nil {
-		log.Fatal(err)
+		s.logger.Error(err)
 	}
 }
 
@@ -105,7 +101,7 @@ func (s *Store) CreateCall(order Order) error {
 	createdAt, _ := datetime.MakeDatetime(order.CreatedAt)
 	updatedAt, _ := datetime.MakeDatetime(order.UpdatedAt)
 
-	insertRequest := tarantool.NewReplaceRequest(ordersSpaceId).Tuple([]interface{}{
+	insertRequest := tarantool.NewReplaceRequest(s.config.OrdersSpaceId).Tuple([]interface{}{
 		order.Id.String(),
 		order.RestaurantName,
 		order.TableNumber,
