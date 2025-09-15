@@ -1,5 +1,7 @@
 bind_address = ":8088"
 log_level = "debug"
+front_origin_url = "http://localhost:3000"
+local_origin_url = "http://localhost:3000"
 
 # tarantooldb
 tarantooldb_address = ":3301"
